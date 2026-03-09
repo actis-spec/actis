@@ -8,7 +8,7 @@
 
 ## 1. What Is an ACTIS Bundle?
 
-An ACTIS bundle is a ZIP archive containing a cryptographically verifiable record of an autonomous agent transaction. It proves — to any independent verifier — that a specific sequence of events occurred, in a specific order, signed by specific agents, without tampering. The bundle is self-contained: everything needed to verify integrity is inside it.
+An ACTIS bundle is a ZIP archive containing a cryptographically verifiable record of an autonomous agent transaction. It provides a deterministic verification procedure by which any independent verifier may confirm that a specific sequence of events occurred, in a specific order, signed by specific agents, without tampering. The bundle is self-contained: everything needed to verify integrity is inside it.
 
 ---
 
@@ -25,6 +25,8 @@ bundle.zip
 ```
 
 ### 2.1 `manifest.json`
+
+The manifest is normative. Schema: [actis/schemas/actis_manifest_v1.json](../schemas/actis_manifest_v1.json). Required: `core_files` (array of relative paths). Paths MUST be unique, relative, use forward slashes, and MUST NOT contain `../` or absolute/drive segments. Minimal ACTIS core: `checksums.sha256`, `manifest.json`, `input/transcript.json`. The checksum file lists hashes for the other core files only (not itself).
 
 ```json
 {
@@ -47,7 +49,11 @@ f6e5d4c3b2a1...64chars...  input/transcript.json
 
 **Critical:** The checksum file MUST NOT include a checksum of itself. Only hash `manifest.json` and `input/transcript.json`.
 
-### 2.3 `input/transcript.json`
+### 2.3 Bundle security (verifiers)
+
+Verifiers MUST reject bundles that have duplicate entries for any core path, symlinks for core paths, or path traversal (`../`, absolute, drive) in core paths. Unlisted files in the archive MUST NOT affect actis_status; verifiers SHOULD warn when present. ACTIS_COMPATIBLE means only the declared core surface is verified—not that the entire ZIP is safe to execute. See ACTIS_COMPATIBILITY.md §5 and ACTIS_AUDITOR_PACK.md §5.
+
+### 2.4 `input/transcript.json`
 
 The transcript is the core evidence artifact. See §3 for the complete field specification.
 
@@ -78,7 +84,7 @@ ACTIS v1.0 uses the transcript format identified by **`actis-transcript/1.0`**.
 | `round_number` | integer | Yes | Zero-indexed, sequential, no gaps |
 | `round_type` | string | Yes | One of: `"INTENT"`, `"ASK"`, `"BID"`, `"COUNTER"`, `"ACCEPT"`, `"REJECT"`, `"ABORT"` |
 | `message_hash` | string | Yes | SHA-256 hex of canonical message content |
-| `envelope_hash` | string | Yes | SHA-256 hex of complete signed envelope |
+| `envelope_hash` | string | Yes | SHA-256 hex of round envelope (excl. envelope_hash and signature); see ACTIS_COMPATIBILITY.md §2 |
 | `signature` | object | Yes | `{ signer_public_key_b58, signature_b58, signed_at_ms, scheme: "ed25519" }` |
 | `timestamp_ms` | integer | Yes | Unix milliseconds, non-decreasing |
 | `previous_round_hash` | string | Yes | SHA-256 hex — see §4.1 for round-0 computation |
@@ -133,7 +139,7 @@ import bs58 from "bs58";
 // Generate a keypair (or load from your agent's identity store)
 const keypair = nacl.sign.keyPair();
 
-// The data to sign is the envelope_hash as 64 lowercase hex characters, UTF-8 encoded (no 0x prefix). See ACTIS_COMPATIBILITY.md §3.7.3.
+// The data to sign is the envelope_hash as 64 lowercase hex characters, UTF-8 encoded (no 0x prefix). See ACTIS_COMPATIBILITY.md §2 (Envelope Hash Construction) and §4 (Signature Verification).
 const envelopeHash = "144090ff43d039c1ea7cae50824a1bc1376ca97f7fc326dfa8021315af47e077";
 const message = new TextEncoder().encode(envelopeHash);
 

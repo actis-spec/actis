@@ -152,6 +152,18 @@ The **baseline valid bundle** for all vectors is a 3-round transcript (INTENT �
 
 ---
 
+### 2.1 v1.1 vectors (bundle security and final_hash)
+
+| Case ID | Name | Scenario | Expected |
+|---------|------|----------|----------|
+| **tv-009** | `noncompliant-incorrect-final-hash` | Valid bundle except `final_hash` does not match recomputation. | `ACTIS_NONCOMPLIANT`; `hash_chain_ok: false`, `replay_ok: false`. |
+| **tv-010** | `noncompliant-duplicate-core-file` | Archive contains two entries for the same core path (e.g. `input/transcript.json` twice). | `ACTIS_NONCOMPLIANT`; bundle security rejection (duplicate path). |
+| **tv-011** | `noncompliant-path-traversal` | Archive contains an entry with path traversal (e.g. `../input/transcript.json`). | `ACTIS_NONCOMPLIANT`; bundle security rejection (path traversal). |
+
+Generate the v1.1 zip files with: `python3 scripts/gen_v1_1_vectors.py` (run from `actis/test-vectors/`).
+
+---
+
 ## 3. Conformance Test Harness Specification
 
 ### 3.1 Runner Architecture
@@ -260,6 +272,21 @@ The baseline valid bundle for all test vectors is constructed as follows:
 4. Package as a ZIP archive.
 
 Each test vector specifies a single deviation from this baseline. The harness applies the deviation, rebuilds the bundle (recomputing checksums only for vectors where the checksum file itself is valid), and invokes the IUT.
+
+---
+
+## 5. Future corpus additions (v1.1 or later)
+
+The following are documented as **candidate** additions for a future corpus revision. They are not part of the v1.0 corpus; implementers are encouraged to handle them as specified in ACTIS_COMPATIBILITY.md §5 and ACTIS_AUDITOR_PACK.md §5.
+
+| Candidate | Description | Normative rule |
+|-----------|--------------|----------------|
+| Incorrect `final_hash` present | Transcript has a `final_hash` that does not match recomputation | ACTIS_NONCOMPLIANT (or warning per implementation) |
+| Duplicate core path in ZIP | Archive contains two or more entries for the same core path | ACTIS_NONCOMPLIANT (ACTIS_COMPATIBILITY.md §5) |
+| Path traversal / symlink for core path | Core path is `../` or absolute, or is a symlink | ACTIS_NONCOMPLIANT (ACTIS_COMPATIBILITY.md §5) |
+| Unlisted files | Archive contains files not in core_files or optional_files | MUST NOT affect actis_status; verifiers SHOULD warn |
+
+Adding these as first-class vectors would require a corpus version bump and updated `expected_results.json`. The v1.0 corpus (tv-001..tv-008) remains stable.
 
 ---
 

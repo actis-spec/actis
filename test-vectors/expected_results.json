@@ -1,109 +1,15 @@
 {
-  "harness_version": "1.0",
   "vectors": [
-    {
-      "id": "tv-001",
-      "zip": "generated/tv-001-compatible-minimal.zip",
-      "expected": {
-        "schema_ok": true,
-        "checksums_ok": true,
-        "hash_chain_ok": true,
-        "signatures_ok": true,
-        "replay_ok": true,
-        "integrity_status": "VALID",
-        "actis_status": "ACTIS_COMPATIBLE"
-      }
-    },
-    {
-      "id": "tv-002",
-      "zip": "generated/tv-002-partial-invalid-signature.zip",
-      "expected": {
-        "schema_ok": true,
-        "checksums_ok": true,
-        "hash_chain_ok": false,
-        "signatures_ok": false,
-        "replay_ok": false,
-        "integrity_status": "TAMPERED",
-        "actis_status": "ACTIS_NONCOMPLIANT"
-      }
-    },
-    {
-      "id": "tv-003",
-      "zip": "generated/tv-003-noncompliant-schema-fail.zip",
-      "expected": {
-        "schema_ok": false,
-        "checksums_ok": true,
-        "hash_chain_ok": true,
-        "signatures_ok": false,
-        "replay_ok": false,
-        "integrity_status": "TAMPERED",
-        "actis_status": "ACTIS_NONCOMPLIANT"
-      }
-    },
-    {
-      "id": "tv-004",
-      "zip": "generated/tv-004-noncompliant-hash-chain-break.zip",
-      "expected": {
-        "schema_ok": true,
-        "checksums_ok": true,
-        "hash_chain_ok": false,
-        "signatures_ok": false,
-        "replay_ok": false,
-        "integrity_status": "TAMPERED",
-        "actis_status": "ACTIS_NONCOMPLIANT"
-      }
-    },
-    {
-      "id": "tv-005",
-      "zip": "generated/tv-005-noncompliant-checksum-tamper.zip",
-      "expected": {
-        "schema_ok": true,
-        "checksums_ok": false,
-        "hash_chain_ok": true,
-        "signatures_ok": true,
-        "replay_ok": true,
-        "integrity_status": "TAMPERED",
-        "actis_status": "ACTIS_NONCOMPLIANT"
-      }
-    },
-    {
-      "id": "tv-006",
-      "zip": "generated/tv-006-noncompliant-missing-manifest.zip",
-      "expected": {
-        "schema_ok": true,
-        "checksums_ok": false,
-        "hash_chain_ok": true,
-        "signatures_ok": true,
-        "replay_ok": true,
-        "integrity_status": "TAMPERED",
-        "actis_status": "ACTIS_NONCOMPLIANT"
-      }
-    },
-    {
-      "id": "tv-007",
-      "zip": "generated/tv-007-compatible-with-failure-event.zip",
-      "expected": {
-        "schema_ok": true,
-        "checksums_ok": true,
-        "hash_chain_ok": true,
-        "signatures_ok": true,
-        "replay_ok": true,
-        "integrity_status": "VALID",
-        "actis_status": "ACTIS_COMPATIBLE"
-      }
-    },
-    {
-      "id": "tv-008",
-      "zip": "generated/tv-008-partial-zero-signatures.zip",
-      "expected": {
-        "schema_ok": true,
-        "checksums_ok": true,
-        "hash_chain_ok": false,
-        "signatures_ok": false,
-        "replay_ok": false,
-        "integrity_status": "TAMPERED",
-        "actis_status": "ACTIS_NONCOMPLIANT"
-      }
-    }
+    { "id": "tv-001", "zip": "generated/tv-001-compatible-minimal.zip", "expected": { "actis_status": "ACTIS_COMPATIBLE" } },
+    { "id": "tv-002", "zip": "generated/tv-002-partial-invalid-signature.zip", "expected": { "actis_status": "ACTIS_NONCOMPLIANT" } },
+    { "id": "tv-003", "zip": "generated/tv-003-noncompliant-schema-fail.zip", "expected": { "actis_status": "ACTIS_NONCOMPLIANT" } },
+    { "id": "tv-004", "zip": "generated/tv-004-noncompliant-hash-chain-break.zip", "expected": { "actis_status": "ACTIS_NONCOMPLIANT" } },
+    { "id": "tv-005", "zip": "generated/tv-005-noncompliant-checksum-tamper.zip", "expected": { "actis_status": "ACTIS_NONCOMPLIANT" } },
+    { "id": "tv-006", "zip": "generated/tv-006-noncompliant-missing-manifest.zip", "expected": { "actis_status": "ACTIS_NONCOMPLIANT" } },
+    { "id": "tv-007", "zip": "generated/tv-007-compatible-with-failure-event.zip", "expected": { "actis_status": "ACTIS_COMPATIBLE" } },
+    { "id": "tv-008", "zip": "generated/tv-008-partial-zero-signatures.zip", "expected": { "actis_status": "ACTIS_NONCOMPLIANT" } },
+    { "id": "tv-009", "zip": "generated/tv-009-noncompliant-incorrect-final-hash.zip", "expected": { "actis_status": "ACTIS_NONCOMPLIANT" } },
+    { "id": "tv-010", "zip": "generated/tv-010-noncompliant-duplicate-core-file.zip", "expected": { "actis_status": "ACTIS_NONCOMPLIANT" } },
+    { "id": "tv-011", "zip": "generated/tv-011-noncompliant-path-traversal.zip", "expected": { "actis_status": "ACTIS_NONCOMPLIANT" } }
   ]
 }

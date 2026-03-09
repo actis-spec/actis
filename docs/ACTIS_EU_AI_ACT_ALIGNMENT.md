@@ -85,7 +85,7 @@ The following sample text may be adapted for an organization's AI system technic
 
 > **ACTIS evidence note**
 >
-> This AI system generates evidence bundles conforming to ACTIS v1.0 (Audit-Compliant Transaction Integrity Standard) for commitment-grade agent events. ACTIS may support evidence integrity relevant to EU AI Act Article 12 logging requirements by providing:
+> This AI system generates evidence bundles conforming to ACTIS v1.0 (Autonomous Coordination & Transaction Integrity Standard) for commitment-grade agent events. ACTIS may support evidence integrity relevant to EU AI Act Article 12 logging requirements by providing:
 >
 > - **Automatic event recording** via append-only, hash-linked transcripts with Ed25519 digital signatures (Article 12 §1, §3).
 > - **Traceability** of AI system functioning through sequential round recording with model/deployment context (Article 12 §1).

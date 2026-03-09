@@ -1,0 +1,5 @@
+# ACTIS Maintainers
+
+The current steward and maintainers of ACTIS are identified in the repository description and in [GOVERNANCE.md](./GOVERNANCE.md). That document defines versioning, the change process, and the transition to independent governance (e.g. when two independent conformant implementations exist, one outside the steward organization).
+
+For normative and contribution questions, see GOVERNANCE.md.
