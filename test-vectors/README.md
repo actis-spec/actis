@@ -1,14 +1,14 @@
-# ACTIS Test Vector Corpus (v1.0)
+# ACTIS Test Vector Corpus (v1.0 + v1.1)
 
 **Status:** Normative  
-**Version:** 1.0  
+**Version:** 1.1  
 **Scope:** Public conformance test vectors for ACTIS v1.0 verification. Defines named test cases, expected outputs, and a CI-compatible runner specification.
 
 ---
 
 ## 1. Overview
 
-This corpus contains eight named test vectors that exercise every normative check in the ACTIS verification report. Any implementation claiming ACTIS v1.0 conformance MUST produce the expected output for each vector.
+This corpus contains eleven named test vectors. Vectors tv-001 through tv-008 are the v1.0 core; tv-009 through tv-011 are v1.1 bundle-security and final-hash vectors. Any implementation claiming ACTIS v1.0 conformance MUST produce the expected output for each vector.
 
 Each vector specifies:
 - **Case ID and Name** — Stable identifier for CI reporting
@@ -152,15 +152,48 @@ The **baseline valid bundle** for all vectors is a 3-round transcript (INTENT �
 
 ---
 
-### 2.1 v1.1 vectors (bundle security and final_hash)
+### tv-009-noncompliant-incorrect-final-hash (v1.1)
 
-| Case ID | Name | Scenario | Expected |
-|---------|------|----------|----------|
-| **tv-009** | `noncompliant-incorrect-final-hash` | Valid bundle except `final_hash` does not match recomputation. | `ACTIS_NONCOMPLIANT`; `hash_chain_ok: false`, `replay_ok: false`. |
-| **tv-010** | `noncompliant-duplicate-core-file` | Archive contains two entries for the same core path (e.g. `input/transcript.json` twice). | `ACTIS_NONCOMPLIANT`; bundle security rejection (duplicate path). |
-| **tv-011** | `noncompliant-path-traversal` | Archive contains an entry with path traversal (e.g. `../input/transcript.json`). | `ACTIS_NONCOMPLIANT`; bundle security rejection (path traversal). |
+| Field | Value |
+|---|---|
+| **Case ID** | `tv-009` |
+| **Name** | `noncompliant-incorrect-final-hash` |
+| **Scenario** | Transcript has a `final_hash` that does not match the recomputed digest of the transcript (excluding `final_hash` and `model_context`). |
+| **Deviation** | Valid 3-round bundle; `final_hash` is replaced with a different 64-char hex string so it no longer matches canonical recomputation. |
+| **Expected Result** | `ACTIS_NONCOMPLIANT` |
+| **Expected Checks** | `signatures_ok: true`, `hash_chain_ok: false`, `schema_ok: true`, `replay_ok: false`, `checksums_ok: true` |
+| **Expected `integrity_status`** | `TAMPERED` |
+| **Expected Notes** | Verifier SHOULD report final hash mismatch or hash chain / replay failure. |
 
-Generate the v1.1 zip files with: `python3 scripts/gen_v1_1_vectors.py` (run from `actis/test-vectors/`).
+---
+
+### tv-010-noncompliant-duplicate-core-file (v1.1)
+
+| Field | Value |
+|---|---|
+| **Case ID** | `tv-010` |
+| **Name** | `noncompliant-duplicate-core-file` |
+| **Scenario** | ZIP contains two or more entries for the same core path (e.g. `input/transcript.json` appears twice). Per ACTIS_COMPATIBILITY.md §5, duplicate core path MUST yield ACTIS_NONCOMPLIANT. |
+| **Deviation** | Archive has duplicate entry for a core file path. Verifier MUST reject before or during extraction. |
+| **Expected Result** | `ACTIS_NONCOMPLIANT` |
+| **Expected Checks** | All false or not applicable; verifier may report bundle security failure. |
+| **Expected `integrity_status`** | `TAMPERED` |
+| **Expected Notes** | Verifier SHOULD report duplicate path (e.g. in `warnings` or as bundle security error). |
+
+---
+
+### tv-011-noncompliant-path-traversal (v1.1)
+
+| Field | Value |
+|---|---|
+| **Case ID** | `tv-011` |
+| **Name** | `noncompliant-path-traversal` |
+| **Scenario** | ZIP contains an entry whose name uses path traversal (e.g. `../input/transcript.json`) or is absolute. Per ACTIS_COMPATIBILITY.md §5, such paths MUST be rejected. |
+| **Deviation** | At least one entry uses `../` or absolute/drive path. Verifier MUST reject. |
+| **Expected Result** | `ACTIS_NONCOMPLIANT` |
+| **Expected Checks** | All false or not applicable; verifier may report bundle security failure. |
+| **Expected `integrity_status`** | `TAMPERED` |
+| **Expected Notes** | Verifier SHOULD report path traversal not allowed (e.g. in `warnings` or as bundle security error). |
 
 ---
 
@@ -251,7 +284,7 @@ The harness produces a JSON results file:
 |---|---|
 | **ACTIS Core Conformant** | Pass tv-001 through tv-004, tv-007, tv-008 (transcript-level vectors) |
 | **ACTIS Bundle Conformant** | Pass all vectors including tv-005 and tv-006 (bundle-level vectors) |
-| **ACTIS Fully Conformant** | Pass all 8 vectors with no skips |
+| **ACTIS Fully Conformant** | Pass all 11 vectors (tv-001 through tv-011) with no skips |
 
 ---
 
@@ -275,18 +308,18 @@ Each test vector specifies a single deviation from this baseline. The harness ap
 
 ---
 
-## 5. Future corpus additions (v1.1 or later)
+## 5. Future corpus additions (beyond v1.1)
 
-The following are documented as **candidate** additions for a future corpus revision. They are not part of the v1.0 corpus; implementers are encouraged to handle them as specified in ACTIS_COMPATIBILITY.md §5 and ACTIS_AUDITOR_PACK.md §5.
+The v1.1 corpus adds tv-009 (incorrect final_hash), tv-010 (duplicate core file), and tv-011 (path traversal). Implementations MUST handle these per ACTIS_COMPATIBILITY.md §5 and ACTIS_AUDITOR_PACK.md §5.
+
+**Possible future vectors:**
 
 | Candidate | Description | Normative rule |
 |-----------|--------------|----------------|
-| Incorrect `final_hash` present | Transcript has a `final_hash` that does not match recomputation | ACTIS_NONCOMPLIANT (or warning per implementation) |
-| Duplicate core path in ZIP | Archive contains two or more entries for the same core path | ACTIS_NONCOMPLIANT (ACTIS_COMPATIBILITY.md §5) |
-| Path traversal / symlink for core path | Core path is `../` or absolute, or is a symlink | ACTIS_NONCOMPLIANT (ACTIS_COMPATIBILITY.md §5) |
+| Symlink for core path | Archive entry for a core path is a symlink | ACTIS_NONCOMPLIANT (ACTIS_COMPATIBILITY.md §5) |
 | Unlisted files | Archive contains files not in core_files or optional_files | MUST NOT affect actis_status; verifiers SHOULD warn |
 
-Adding these as first-class vectors would require a corpus version bump and updated `expected_results.json`. The v1.0 corpus (tv-001..tv-008) remains stable.
+The v1.0 core (tv-001..tv-008) remains stable; v1.1 adds tv-009..tv-011 without changing existing vector expected outputs.
 
 ---
 

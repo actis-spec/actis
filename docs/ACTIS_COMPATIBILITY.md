@@ -57,7 +57,7 @@ envelope_hash = to_lower_hex( SHA-256( utf8( canonical_json( envelope_object ) )
 
 ### 2.3 Signature Binding
 
-The signer computes `envelope_hash` as above (64 lowercase hex characters). The **message signed** is the 32-byte binary digest: the raw bytes obtained by decoding the 64-character hex string (two hex digits per byte). The verifier MUST verify the signature against this 32-byte value. Verifiers MAY recompute the envelope object from the round (excluding `envelope_hash` and `signature`), compute the digest, and compare it to the round’s `envelope_hash` to detect tampering of envelope fields.
+The signer computes `envelope_hash` as above, then signs the **envelope_hash value** (the 64-character hex string) as UTF-8 bytes. The verifier MUST verify the signature against the `envelope_hash` value stored in the round. Verifiers MAY recompute the envelope object from the round (excluding `envelope_hash` and `signature`), compute the digest, and compare it to the round’s `envelope_hash` to detect tampering of envelope fields.
 
 ### 2.4 Worked Example (pseudocode)
 
@@ -73,7 +73,7 @@ Envelope object (input to hash):
   { "message_hash": "a1b2...", "previous_round_hash": "c3d4...", "round_hash": "e5f6...", "round_number": 0, "round_type": "INTENT", "timestamp_ms": 1709500000000 }
 
 Canonical JSON string → SHA-256 → 64 lowercase hex → envelope_hash.
-Then: signature = Ed25519_sign( decode_hex(envelope_hash) ).  // 32-byte binary digest
+Then: signature = Ed25519_sign( utf8(envelope_hash) ).
 ```
 
 ---
@@ -117,7 +117,7 @@ final_hash = to_lower_hex( SHA-256( utf8( canonical_json( transcript_for_hash ) 
 ## 4. Signature Verification
 
 - **Scheme:** ACTIS v1.0 supports Ed25519 only. The signature is a detached Ed25519 signature.
-- **Message signed:** The 32-byte binary digest obtained by decoding the 64-character lowercase hex `envelope_hash` (two hex digits per byte). No UTF-8 encoding of the hex string; the raw decoded bytes are the message.
+- **Message signed:** The `envelope_hash` value (64 lowercase hex characters) encoded as UTF-8 bytes. No `0x` prefix, no spaces.
 - **Verification:** The verifier MUST decode `signature.signer_public_key_b58` and `signature.signature_b58` (Base58), decode `envelope_hash` as hex to bytes, and verify that the signature is valid for the public key over the envelope_hash bytes. If the round’s `public_key_b58` is present, it MUST match `signature.signer_public_key_b58` for the round to be considered valid.
 
 ---

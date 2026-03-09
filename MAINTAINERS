@@ -1,5 +1,7 @@
 # ACTIS Maintainers
 
-The current steward and maintainers of ACTIS are identified in the repository description and in [GOVERNANCE.md](./GOVERNANCE.md). That document defines versioning, the change process, and the transition to independent governance (e.g. when two independent conformant implementations exist, one outside the steward organization).
+**Steward:** The ACTIS specification is maintained by the actis-spec organization (https://github.com/actis-spec). The repository actis-spec/actis is the canonical source.
 
-For normative and contribution questions, see GOVERNANCE.md.
+**Current maintainer identification:** For named maintainers and contact, see the repository description on GitHub or the repository README. This file MUST be kept accurate so that evaluators and implementers know who maintains ACTIS.
+
+**Governance:** Versioning, change process, and transition to a multi-maintainer model are defined in GOVERNANCE.md.

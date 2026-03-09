@@ -26,7 +26,7 @@ ACTIS is maintained by **ACTIS Maintainers**. This document defines versioning, 
 
 ## Maintainers
 
-- The **current steward** (organization or named maintainers) is identified in the repository—e.g. in README, MAINTAINERS, or the repository description. This identification MUST be kept accurate so that evaluators and implementers know who maintains ACTIS.
+- The **current steward** (organization or named maintainers) is identified in the repository. See **MAINTAINERS** in this repository for steward identification; README and the repository description may also list named maintainers. This identification MUST be kept accurate so that evaluators and implementers know who maintains ACTIS.
 - **Initial maintainers** are listed in the repository (e.g. in MAINTAINERS or the repository description).
 - **Future maintainers** are added by the existing Maintainers via the governance process. Criteria include sustained contribution to the specification, implementations, or tooling, and commitment to vendor-neutral stewardship.
 - Maintainers are responsible for: reviewing and merging normative and non-normative changes, publishing releases, and representing ACTIS in standards-related discussions.
