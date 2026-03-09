@@ -1,0 +1,13 @@
+# ACTIS test vector corpus — SHA-256 manifest (v1.0)
+# These vectors are immutable for v1.x. Any change requires a new major or minor version per GOVERNANCE.md.
+# Verify with: shasum -a 256 -c MANIFEST.sha256 (from this directory)
+
+41beee4c0aa383642af4f3e6550c4ea706912f12faa20ce5a1d10b1692541f81  generated/tv-001-compatible-minimal.zip
+0e035459ddd8f8792c2d2f7445c4af2c5c82da7ae4e1e585dae032fea53fedf2  generated/tv-002-partial-invalid-signature.zip
+3ef4fcc7c55bf641d78e564622e8a8f8770ae35076d64cc85d169c6f92fc872f  generated/tv-003-noncompliant-schema-fail.zip
+3cfce8f2e52eae92f2d380dd0d8083aee10d52d50da843b662d74e5d83d719b0  generated/tv-004-noncompliant-hash-chain-break.zip
+bc02f762d14817337d7d9b3e27cdbe5be553054558f78ced34f6ce5ace9c218c  generated/tv-005-noncompliant-checksum-tamper.zip
+5a25838f81dd87d38b79c1654e486db3f14b807fd14f4dbfa785a788daba7874  generated/tv-006-noncompliant-missing-manifest.zip
+50fe060788452e6951731f3eac0e3954a47fbe785f084f66c63b78c4f6610992  generated/tv-007-compatible-with-failure-event.zip
+e0fab7a22a0519fd2b964ad1198fc300716b71c68ada3ed096189cb357d56964  generated/tv-008-partial-zero-signatures.zip
+c3b7278ecac6e9048b6d9704500d946f070fcf58f51f55d2d8343aa50c72ab9d  expected_results.json
