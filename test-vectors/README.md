@@ -263,4 +263,19 @@ Each test vector specifies a single deviation from this baseline. The harness ap
 
 ---
 
+## 5. Future corpus additions (v1.1 or later)
+
+The following are documented as **candidate** additions for a future corpus revision. They are not part of the v1.0 corpus; implementers are encouraged to handle them as specified in ACTIS_COMPATIBILITY.md §5 and ACTIS_AUDITOR_PACK.md §5.
+
+| Candidate | Description | Normative rule |
+|-----------|--------------|----------------|
+| Incorrect `final_hash` present | Transcript has a `final_hash` that does not match recomputation | ACTIS_NONCOMPLIANT (or warning per implementation) |
+| Duplicate core path in ZIP | Archive contains two or more entries for the same core path | ACTIS_NONCOMPLIANT (ACTIS_COMPATIBILITY.md §5) |
+| Path traversal / symlink for core path | Core path is `../` or absolute, or is a symlink | ACTIS_NONCOMPLIANT (ACTIS_COMPATIBILITY.md §5) |
+| Unlisted files | Archive contains files not in core_files or optional_files | MUST NOT affect actis_status; verifiers SHOULD warn |
+
+Adding these as first-class vectors would require a corpus version bump and updated `expected_results.json`. The v1.0 corpus (tv-001..tv-008) remains stable.
+
+---
+
 *This corpus is versioned alongside ACTIS core. New vectors MAY be added in minor versions. Existing vector expected outputs MUST NOT change without a new ACTIS major version.*

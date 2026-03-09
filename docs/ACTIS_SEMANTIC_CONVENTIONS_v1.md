@@ -50,7 +50,7 @@ Source: ACTIS v1.0 transcript schema ([actis/schemas/actis_transcript_v1.json](.
 | `round_number` | integer | Yes | v1.0 | Zero-indexed round number | ≥ 0, sequential, no gaps | Round 0 is always INTENT |
 | `round_type` | string | Yes | v1.0 | Negotiation round type | `"INTENT"` \| `"ASK"` \| `"BID"` \| `"COUNTER"` \| `"ACCEPT"` \| `"REJECT"` \| `"ABORT"` | UPPER_SNAKE_CASE canonical form |
 | `message_hash` | string | Yes | v1.0 | SHA-256 of canonical message content | `^[a-f0-9]{64}$` | Excluding envelope wrapper |
-| `envelope_hash` | string | Yes | v1.0 | SHA-256 of complete signed envelope | `^[a-f0-9]{64}$` | Including signature; enables signature verification |
+| `envelope_hash` | string | Yes | v1.0 | SHA-256 of round envelope (see ACTIS_COMPATIBILITY.md §2) | `^[a-f0-9]{64}$` | Round-local object (excl. envelope_hash and signature); RFC 8785 + SHA-256; signature is over this hash |
 | `signature` | object | Yes | v1.0 | Cryptographic signature of round | `Signature` object | MUST verify against `envelope_hash` |
 | `timestamp_ms` | integer | Yes | v1.0 | Round creation timestamp | Unix milliseconds, ≥ 0 | MUST be non-decreasing across rounds |
 | `previous_round_hash` | string | Yes | v1.0 | SHA-256 of previous round (canonical) | `^[a-f0-9]{64}$` | Round 0: SHA-256 of `intent_id` as UTF-8 |

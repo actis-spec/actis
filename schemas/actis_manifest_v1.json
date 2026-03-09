@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "actis-manifest/1.0/schema.json",
+  "title": "ACTIS Bundle Manifest Schema v1.0",
+  "description": "Normative schema for manifest.json in ACTIS v1.0 evidence bundles. The manifest lists bundle contents and defines which paths are required for ACTIS verification.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["core_files"],
+  "properties": {
+    "standard": {
+      "type": "object",
+      "description": "When present with name ACTIS, bundle is ACTIS-aligned; verification uses core_files only.",
+      "properties": {
+        "name": { "type": "string", "const": "ACTIS" },
+        "version": { "type": "string", "const": "1.0" }
+      },
+      "required": ["name", "version"]
+    },
+    "core_files": {
+      "type": "array",
+      "description": "Relative paths required for ACTIS verification. MUST be unique. Each path MUST be a relative path (forward slashes), MUST NOT contain '..', MUST NOT be absolute or include drive prefixes. For ACTIS v1.0 the default minimal set is: checksums.sha256, manifest.json, input/transcript.json.",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "optional_files": {
+      "type": "array",
+      "description": "Relative paths that are not required for ACTIS pass/fail. Same path format rules as core_files.",
+      "items": { "type": "string", "minLength": 1 },
+      "default": []
+    }
+  }
+}

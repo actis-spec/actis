@@ -1,4 +1,4 @@
-# ACTIS — Audit-Compliant Transaction Integrity Standard
+# ACTIS — Autonomous Coordination & Transaction Integrity Standard
 
 **What ACTIS is:** ACTIS is a vendor-neutral, open standard for transcript and evidence-bundle integrity verification and deterministic replay. It defines how to produce and verify cryptographically intact, hash-linked evidence so that any independent party can confirm that recorded events are unaltered and replay-consistent.
 
@@ -15,6 +15,8 @@ Classification and paths are defined in [docs/NORMATIVE_INDEX.md](./docs/NORMATI
 **Informational:** [ACTIS_BUNDLE_INTEGRATION_GUIDE.md](./docs/ACTIS_BUNDLE_INTEGRATION_GUIDE.md) · [ACTIS_INTEROP_EVENT_v1.md](./docs/ACTIS_INTEROP_EVENT_v1.md) · [ACTIS_EU_AI_ACT_ALIGNMENT.md](./docs/ACTIS_EU_AI_ACT_ALIGNMENT.md) · [ACTIS_NIST_AI_RMF_MAPPING.md](./docs/ACTIS_NIST_AI_RMF_MAPPING.md) · [GOVERNANCE.md](./GOVERNANCE.md)
 
 **IP Commitment:** [ACTIS_IP_COMMITMENT.md](./docs/ACTIS_IP_COMMITMENT.md) — patent non-assert commitment for implementers.
+
+**Licensing:** This repository is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE). The patent non-assert commitment in ACTIS_IP_COMMITMENT.md is separate from and in addition to the Apache-2.0 license.
 
 ---
 
@@ -62,9 +64,10 @@ Full schema and conformance levels: [ACTIS_COMPATIBILITY.md](./docs/ACTIS_COMPAT
 ```
 actis/
 ├── README.md
+├── LICENSE            ← Apache-2.0
 ├── GOVERNANCE.md
 ├── docs/              ← Normative and informational documents
-├── schemas/           ← actis_transcript_v1.json
+├── schemas/           ← actis_transcript_v1.json, actis_manifest_v1.json
 ├── test-vectors/      ← tv-001..tv-008 corpus, expected_results.json, run_conformance.sh
 └── ...
 ```

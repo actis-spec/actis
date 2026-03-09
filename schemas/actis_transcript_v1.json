@@ -141,7 +141,7 @@
         "envelope_hash": {
           "type": "string",
           "pattern": "^[a-f0-9]{64}$",
-          "description": "SHA-256 hash (hex) of complete signed envelope (including signature). Enables signature verification."
+          "description": "SHA-256 hash (hex) of round envelope per ACTIS_COMPATIBILITY.md §2 (excl. envelope_hash and signature); signature is over this hash."
         },
         "signature": {
           "$ref": "#/$defs/Signature",
