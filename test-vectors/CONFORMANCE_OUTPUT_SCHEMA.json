@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ACTIS Verifier Conformance Output",
+  "description": "JSON structure the conformance harness expects from a verifier run on a test vector zip. Canonical status field is actis_status.",
+  "type": "object",
+  "required": ["actis_version", "actis_status", "signatures_ok", "hash_chain_ok", "schema_ok", "replay_ok", "checksums_ok", "warnings"],
+  "properties": {
+    "actis_version": { "type": "string", "example": "1.0" },
+    "actis_status": { "type": "string", "enum": ["ACTIS_COMPATIBLE", "ACTIS_PARTIAL", "ACTIS_NONCOMPLIANT"], "description": "Canonical conformance level; case-sensitive." },
+    "integrity_status": { "type": "string", "enum": ["VALID", "TAMPERED", "INDETERMINATE"], "description": "Deprecated alias; optional when actis_status is present." },
+    "signatures_ok": { "type": "boolean" },
+    "hash_chain_ok": { "type": "boolean" },
+    "schema_ok": { "type": "boolean" },
+    "replay_ok": { "type": "boolean" },
+    "checksums_ok": { "type": "boolean" },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "evidence_refs_checked_count": { "type": "number" },
+    "files_hashed_count": { "type": "number" }
+  }
+}
