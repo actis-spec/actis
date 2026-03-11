@@ -1,4 +1,3 @@
----
 # ACTIS — Autonomous Coordination & Transaction Integrity Standard
 
 **What ACTIS is:** A vendor-neutral, open standard for transcript and evidence-bundle integrity verification and deterministic replay. ACTIS defines how to produce and verify cryptographically intact, hash-linked evidence so that any independent party can confirm that recorded events are unaltered and replay-consistent.
