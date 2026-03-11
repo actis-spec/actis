@@ -174,6 +174,60 @@ The canonical ACTIS verification report is a single JSON object. No key in this 
 
 ---
 
+## 7. Security Considerations
+
+### 7.1 Security Properties
+
+ACTIS v1.0 provides the following guarantees for a presented transcript bundle:
+
+- **Transcript integrity** — Any modification to a round's fields breaks the hash chain and is detectable.
+- **Signature authenticity** — Each round's envelope_hash is signed with Ed25519. A verifier with the signer's public key can confirm the round was produced by the claimed key holder.
+- **Truncation resistance** — Each round binds its predecessor via `previous_round_hash`. Removing any round from the middle or end of the chain breaks the chain and fails `hash_chain_ok`.
+- **Round substitution resistance** — A round from a different position or transcript cannot be silently inserted; the hash chain binding will break.
+- **Cross-protocol signature resistance** — The signing message is `utf8("ACTIS/v1") || hex_decode(envelope_hash)`. Signatures produced for ACTIS v1.0 are not valid in other protocol contexts that use a different domain string.
+- **Replay determinism** — Hash chain recomputation is deterministic. Two conformant verifiers presented with the same bundle MUST reach the same `hash_chain_ok` result.
+
+### 7.2 Known Limitations
+
+**Equivocation (split-view attack)**
+
+ACTIS verifies that a presented transcript bundle is internally intact and replay-consistent. ACTIS does not by itself prove that no alternate valid transcript exists for the same underlying transaction.
+
+An actor in possession of a valid signing key may produce two or more transcripts that each verify independently under ACTIS. Both will be `ACTIS_COMPATIBLE`. They may describe contradictory realities.
+
+This is the equivocation or split-view attack — the same class of problem as Certificate Transparency log forks and distributed ledger equivocation.
+
+ACTIS v1.0 explicitly does not close this gap. Preventing equivocation requires coordination mechanisms outside the scope of this standard, such as:
+
+- Bilateral counter-signing, where each participant signs the other's rounds, creating mutual acknowledgment of a single shared history.
+- Publication to an append-only transparency log, enabling detection of duplicate `transcript_id` commitments.
+- External monotonic transaction identifiers or registry anchoring that binds a transaction to exactly one transcript.
+
+Implementers and integrators operating in adversarial environments SHOULD layer one of the above mechanisms on top of ACTIS verification. The absence of such a layer means that ACTIS verification alone cannot rule out the existence of a competing valid transcript.
+
+**Key compromise**
+
+ACTIS verification confirms that a signature is valid for a given public key. It does not verify that the signing key was not compromised at the time of signing. Key lifecycle management, revocation, and hardware security are outside the scope of this standard.
+
+**Off-chain collusion**
+
+ACTIS does not defend against colluding participants who agree off-chain to produce a false but internally consistent transcript. A transcript that is ACTIS_COMPATIBLE reflects only that its internal structure is intact, not that the events it describes occurred.
+
+### 7.3 Threat Model Summary
+
+| Attack | ACTIS Defense | Gap |
+|--------|--------------|-----|
+| Transcript field tampering | Hash chain breaks | None |
+| Round truncation | Chain completeness check | None |
+| Round substitution | prev_hash + round_index binding | None |
+| Signature forgery | Ed25519 verification | None |
+| Cross-protocol signature reuse | Domain string "ACTIS/v1" | None |
+| Equivocation / split-view | — | Not closed in v1.0; requires external coordination |
+| Compromised signing key | — | Out of scope; key management is implementer responsibility |
+| Off-chain collusion | — | Out of scope by design |
+
+---
+
 ## Developer note (Informative): separation of concerns
 
 - **ACTIS** defines only neutral verification (integrity, replay, report schema). Conformant implementations MUST NOT require or normatively reference blame, reputation, risk scoring, or settlement.

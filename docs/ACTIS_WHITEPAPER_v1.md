@@ -103,7 +103,7 @@ Maps to: hash_chain_ok, replay_ok
 The bundle's checksums.sha256 file lists SHA-256 hashes for the bundle's core files in standard sha256sum format (two-space separator). Each listed file must exist in the bundle and its computed hash must match the stored value.
 Maps to: checksums_ok
 5.4 Check 4 — Signatures
-Each round's signature object contains signer_public_key_b58 (Ed25519 public key, Base58-encoded) and signature_b58 (Ed25519 signature, Base58-encoded). The signing message is the 32-byte binary value obtained by hex-decoding the round's envelope_hash field (64 lowercase hex characters → 32 raw bytes). Implementations MUST hex-decode the envelope_hash string; the UTF-8 encoding of the hex string is not the signing message. Verification uses standard Ed25519.
+Each round's signature object contains signer_public_key_b58 (Ed25519 public key, Base58-encoded) and signature_b58 (Ed25519 signature, Base58-encoded). The signing message is the 40-byte concatenation of the UTF-8 encoding of the domain string "ACTIS/v1" (8 bytes) and the 32-byte binary value obtained by hex-decoding the round's envelope_hash field: signing_message = utf8("ACTIS/v1") || hex_decode(envelope_hash). The domain string prevents cross-protocol signature reuse. The raw hex-decoded envelope_hash alone is not the signing message. Verification uses standard Ed25519.
 Maps to: signatures_ok
 5.5 Status derivation
 The four checks produce a canonical actis_status:
@@ -234,7 +234,9 @@ Round reordering: The previous_round_hash chain binds rounds in sequence. Reorde
 Signature stripping: Removing signatures produces ACTIS_PARTIAL rather than ACTIS_COMPATIBLE. Verifiers and consumers must treat ACTIS_PARTIAL as a distinct state — structurally intact but unauthenticated.
 Genesis substitution: The genesis hash binds the chain to intent_id and created_at_ms. A chain transplant — taking valid rounds from one transcript and inserting them into another transcript — produces a genesis hash mismatch on round 0.
 Path traversal in bundles: Crafted ZIP archives with .. path segments or duplicate entries are rejected by the bundle security rules before any transcript processing occurs.
-Re-signing attack: Excluding signatures from round_hash preserves separation between structural integrity and authentication. An attacker can construct a new unsigned transcript with internally consistent structural hashes, but cannot transform a signed transcript into an unsigned one without changing transcript hashes and producing a different evidence artifact. The verifier correctly reports such an artifact as structurally intact but unauthenticated (ACTIS_PARTIAL).
+Re-signing attack: Excluding signatures from round_hash preserves separation between structural integrity and authentication. An attacker can construct a new unsigned transcript with internally consistent structural hashes, but cannot transform a signed transcript into an unsigned one without changing transcript hashes and producing a different evidence artifact. The verifier correctly reports such an artifact as structurally intact but unauthenticated (ACTIS_PARTIAL). Cross-protocol signature reuse is prevented by the domain string "ACTIS/v1" prepended to the signing message.
+
+**Equivocation (split-view attack):** ACTIS verifies that a presented transcript bundle is internally intact and replay-consistent. It does not prove that no alternate valid transcript exists for the same underlying transaction. An actor with a valid signing key may produce multiple transcripts that each verify independently. Preventing equivocation requires external coordination mechanisms such as bilateral counter-signing, append-only transparency log anchoring, or external transaction registry binding. This limitation is explicitly acknowledged; see §7.2 of ACTIS_STANDARD_v1.md.
 
 9. Governance
 ACTIS is governed as an open standard. The governance model is documented in actis/GOVERNANCE.md.
@@ -246,7 +248,6 @@ Implementations: Third-party implementations are not governed by this repository
 
 10. Future Work
 ACTIS v1.0 is intentionally minimal. The following areas are candidates for future specification work, listed for informational purposes only. None of these are commitments, and none affect v1.0 conformance.
-Signature domain separation: Binding signatures to the specific protocol version (e.g., a domain string ACTIS/v1) prevents cross-protocol signature reuse. This is a security hardening measure with no impact on current deployments.
 Merkle bundle format: For very large transcripts, a Merkle-structured bundle format would allow selective disclosure — proving a specific subset of rounds without revealing the full transcript. This requires a new bundle format version.
 Canonical transcript compression: Long transcripts with many rounds produce large bundles. A canonical compression scheme would reduce storage and transmission costs without affecting verification semantics.
 Streaming verification: The current model requires a complete bundle to verify. A streaming variant would allow incremental verification of rounds as they are produced, enabling real-time integrity monitoring.
