@@ -119,10 +119,10 @@ The verification report MAY include integrity_status as a compatibility alias: V
 5.6 Canonicalization
 All hash inputs use RFC 8785 JSON Canonicalization Scheme (JCS):
 
-- Object keys sorted lexicographically by Unicode code-unit order
-- No insignificant whitespace
-- Numbers serialized per ECMAScript NumberToString — 0.00005 not 5e-5
-- Strings use standard JSON escaping without Unicode normalization
+Object keys sorted lexicographically by Unicode code-unit order
+No insignificant whitespace
+Numbers serialized per ECMAScript NumberToString — 0.00005 not 5e-5
+Strings use standard JSON escaping without Unicode normalization
 
 JCS is mandatory. Implementations must use a conformant JCS implementation. JSON.stringify with sorted keys is not equivalent to JCS for all inputs.
 
@@ -157,9 +157,9 @@ Bundles may contain additional files beyond the core set. Verifiers must ignore 
 7.1 Conformance requirements
 An implementation is ACTIS v1.0 compatible if it:
 
-- Accepts bundles as ZIP archives with the defined layout
-- Produces verification reports with the canonical fields and status values
-- Passes the full published ACTIS conformance corpus via the standard harness
+Accepts bundles as ZIP archives with the defined layout
+Produces verification reports with the canonical fields and status values
+Passes the full published ACTIS conformance corpus via the standard harness
 
 Conformance is binary: an implementation either passes the full corpus or it does not. There is no partial conformance designation. Conformance is determined solely by matching the published expected results in expected_results.json for the full published corpus. No other criteria apply.
 7.2 The conformance corpus
@@ -209,9 +209,9 @@ The harness compares each vector's output against expected_results.json. All 11 
 7.5 Corpus invariants
 The corpus encodes several normative invariants that implementations must satisfy:
 
-- hash_chain_ok must be true for tv-002 and tv-008 — signature invalidity must not affect the hash chain check
-- schema_ok must be false for tv-006 — missing manifest is a schema/layout failure
-- actis_status must be ACTIS_PARTIAL (not ACTIS_NONCOMPLIANT) for tv-002 and tv-008
+hash_chain_ok must be true for tv-002 and tv-008 — signature invalidity must not affect the hash chain check
+schema_ok must be false for tv-006 — missing manifest is a schema/layout failure
+actis_status must be ACTIS_PARTIAL (not ACTIS_NONCOMPLIANT) for tv-002 and tv-008
 
 An implementation that passes all 11 vectors necessarily implements these invariants correctly.
 
@@ -246,7 +246,7 @@ Implementations: Third-party implementations are not governed by this repository
 
 10. Future Work
 ACTIS v1.0 is intentionally minimal. The following areas are candidates for future specification work, listed for informational purposes only. None of these are commitments, and none affect v1.0 conformance.
-Signature domain separation: Binding signatures to the specific protocol version (e.g., prepending a domain string such as 'ACTIS/v1' to the signing message) prevents cross-protocol signature reuse. This is a planned improvement for a future version.
+Signature domain separation: Binding signatures to the specific protocol version (e.g., a domain string ACTIS/v1) prevents cross-protocol signature reuse. This is a security hardening measure with no impact on current deployments.
 Merkle bundle format: For very large transcripts, a Merkle-structured bundle format would allow selective disclosure — proving a specific subset of rounds without revealing the full transcript. This requires a new bundle format version.
 Canonical transcript compression: Long transcripts with many rounds produce large bundles. A canonical compression scheme would reduce storage and transmission costs without affecting verification semantics.
 Streaming verification: The current model requires a complete bundle to verify. A streaming variant would allow incremental verification of rounds as they are produced, enabling real-time integrity monitoring.
