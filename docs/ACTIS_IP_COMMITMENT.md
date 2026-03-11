@@ -2,6 +2,8 @@
 
 **Effective Date:** 2026-03-08
 
+**Legal (not normative specification):** This document is a legal commitment. It is not part of the normative verification specification (ACTIS_STANDARD_v1.md, ACTIS_COMPATIBILITY.md).
+
 ---
 
 ## Licensing (repository and specification)

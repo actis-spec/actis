@@ -6,6 +6,8 @@
 
 This document defines the normative algorithms for ACTIS v1.0 verification: envelope hash construction, round and transcript hashing, signature verification, and the actis_status decision tree. Implementations MUST follow these algorithms to be conformant.
 
+**Normative:** The algorithms and decision rules in this document are normative. Formulas and worked examples are labeled informative.
+
 ---
 
 ## 1. Normative Language
@@ -57,9 +59,9 @@ envelope_hash = to_lower_hex( SHA-256( utf8( canonical_json( envelope_object ) )
 
 ### 2.3 Signature Binding
 
-The signer computes `envelope_hash` as above, then signs the **envelope_hash value** (the 64-character hex string) as UTF-8 bytes. The verifier MUST verify the signature against the `envelope_hash` value stored in the round. Verifiers MAY recompute the envelope object from the round (excluding `envelope_hash` and `signature`), compute the digest, and compare it to the round’s `envelope_hash` to detect tampering of envelope fields.
+The signing message is the 32-byte binary value obtained by hex-decoding the round’s envelope_hash field (64 lowercase hex characters → 32 raw bytes). Implementations MUST hex-decode the envelope_hash string before passing it to Ed25519 verify. The UTF-8 encoding of the hex string is NOT the signing message. Verifiers MAY recompute the envelope object from the round (excluding `envelope_hash` and `signature`), compute the digest, and compare it to the round’s `envelope_hash` to detect tampering of envelope fields.
 
-### 2.4 Worked Example (pseudocode)
+### 2.4 Informative example (pseudocode)
 
 ```
 Round (excerpt):
@@ -73,7 +75,8 @@ Envelope object (input to hash):
   { "message_hash": "a1b2...", "previous_round_hash": "c3d4...", "round_hash": "e5f6...", "round_number": 0, "round_type": "INTENT", "timestamp_ms": 1709500000000 }
 
 Canonical JSON string → SHA-256 → 64 lowercase hex → envelope_hash.
-Then: signature = Ed25519_sign( utf8(envelope_hash) ).
+Then: signing_message = hex_decode(envelope_hash).  // 64 hex chars → 32 raw bytes
+      signature = Ed25519_sign(signing_message).
 ```
 
 ---
@@ -92,12 +95,14 @@ previous_round_hash = to_lower_hex( SHA-256( utf8( intent_id + ":" + created_at_
 
 ### 3.2 Round hash (per round)
 
-For each round, the **round_hash** is the SHA-256 digest of the canonical JSON serialization of the round object **excluding the `round_hash` field itself**. RFC 8785 canonicalization MUST be used. The result is 64 lowercase hex characters.
+For each round, the **round_hash** is the SHA-256 digest of the canonical JSON serialization of the round object **excluding the `round_hash` and `signature` fields**. RFC 8785 canonicalization MUST be used. The result is 64 lowercase hex characters.
 
 ```
-round_object_without_hash = round with key "round_hash" removed
-round_hash = to_lower_hex( SHA-256( utf8( canonical_json( round_object_without_hash ) ) ) )
+round_object_for_hashing = round with keys "round_hash" AND "signature" removed
+round_hash = to_lower_hex( SHA-256( utf8( canonical_json( round_object_for_hashing ) ) ) )
 ```
+
+**Invariant:** `hash_chain_ok` MUST NOT depend on signature verification. Signatures are attestations, not structural state; they are excluded from structural hashing.
 
 ### 3.3 Chain linkage
 
@@ -117,8 +122,8 @@ final_hash = to_lower_hex( SHA-256( utf8( canonical_json( transcript_for_hash ) 
 ## 4. Signature Verification
 
 - **Scheme:** ACTIS v1.0 supports Ed25519 only. The signature is a detached Ed25519 signature.
-- **Message signed:** The `envelope_hash` value (64 lowercase hex characters) encoded as UTF-8 bytes. No `0x` prefix, no spaces.
-- **Verification:** The verifier MUST decode `signature.signer_public_key_b58` and `signature.signature_b58` (Base58), decode `envelope_hash` as hex to bytes, and verify that the signature is valid for the public key over the envelope_hash bytes. If the round’s `public_key_b58` is present, it MUST match `signature.signer_public_key_b58` for the round to be considered valid.
+- **Message signed:** The signing message is the 32-byte binary value obtained by hex-decoding the round's envelope_hash field (64 lowercase hex characters → 32 raw bytes). Implementations MUST hex-decode the envelope_hash string before passing it to Ed25519 verify. The UTF-8 encoding of the hex string is NOT the signing message.
+- **Verification:** The verifier MUST decode `signature.signer_public_key_b58` and `signature.signature_b58` (Base58), hex-decode the round’s envelope_hash to 32 bytes, and verify that the signature is valid for the public key over that message. If the round’s `public_key_b58` is present, it MUST match `signature.signer_public_key_b58` for the round to be considered valid.
 
 ---
 

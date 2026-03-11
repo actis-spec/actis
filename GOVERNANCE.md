@@ -2,6 +2,8 @@
 
 ACTIS is maintained by **ACTIS Maintainers**. This document defines versioning, the change process, maintainer responsibilities, and the transition to independent governance.
 
+**Policy (not normative specification):** This document is governance and process policy. It is not part of the normative verification specification (ACTIS_STANDARD_v1.md, ACTIS_COMPATIBILITY.md).
+
 ---
 
 ## Versioning Policy

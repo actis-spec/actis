@@ -6,6 +6,8 @@
 
 This document is the single normative entrypoint for the ACTIS standard. It defines integrity verification and replay semantics for signed, hash-linked transaction evidence. It does not define blame, reputation, risk scoring, or settlement rails.
 
+**Normative:** The body of this document is normative. Examples and developer notes are labeled informative.
+
 ---
 
 ## Normative Language
@@ -147,7 +149,7 @@ The canonical ACTIS verification report is a single JSON object. No key in this 
 | `files_hashed_count` | number | Number of files hashed in replay. |
 | `optional_attachments_present` | string[] | Namespaces of optional attachments present (e.g. `["vendor/*"]`). Informational only. |
 
-**Example:**
+**Informative example:**
 
 ```json
 {
@@ -172,7 +174,7 @@ The canonical ACTIS verification report is a single JSON object. No key in this 
 
 ---
 
-## Developer note: separation of concerns
+## Developer note (Informative): separation of concerns
 
 - **ACTIS** defines only neutral verification (integrity, replay, report schema). Conformant implementations MUST NOT require or normatively reference blame, reputation, risk scoring, or settlement.
 - **Vendor-specific extensions** (e.g. fault determination, actuarial snapshots, reputation snapshots, underwriting summaries) are optional, non-standard attachments. They MUST be clearly labeled as such and MUST NOT affect ACTIS pass/fail. Bundles and UIs should keep them in separate namespaces or panels from the ACTIS verification result.
