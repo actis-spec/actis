@@ -57,6 +57,33 @@ envelope_object = { round fields except "envelope_hash" and "signature" }
 envelope_hash = to_lower_hex( SHA-256( utf8( canonical_json( envelope_object ) ) ) )
 ```
 
+### 2.2.1 Encoding Rationale (Informative)
+
+ACTIS v1.0 uses RFC 8785 (JCS) as the canonical serialization for all hash
+inputs. JCS was chosen for the following reasons:
+
+- **Human-readable without a decoder.** JSON transcripts can be inspected by
+  auditors, legal reviewers, and compliance teams using any text editor, without
+  tooling dependencies.
+- **Low integration barrier.** JSON parsers are available in every major
+  language and runtime. Enterprise integrators can adopt ACTIS without
+  introducing binary encoding dependencies.
+- **Deterministic under RFC 8785.** JCS defines unambiguous key ordering,
+  number encoding, and string handling. Implementations that follow RFC 8785
+  produce byte-identical output for the same logical input.
+
+**CBOR as a tracked v2 path.** Deterministic CBOR (RFC 8949 + RFC 8943 or
+CBOR Deterministic Encoding) offers stricter encoding guarantees, smaller wire
+size, and no dependence on a canonicalization layer over an inherently
+order-agnostic format. These properties make it a strong candidate for a future
+ACTIS v2 encoding profile. The decision to use JCS in v1 is pragmatic and
+intentional; implementers who raise CBOR as a concern will find this documented
+answer rather than silence.
+
+Implementations MUST NOT substitute CBOR or any other encoding for JCS in
+ACTIS v1.0. A future version that adopts CBOR will define a new
+canonicalization algorithm identifier and maintain a separate conformance corpus.
+
 ### 2.3 Signature Binding
 
 The signing message is the 40-byte concatenation of the UTF-8 encoding of the domain string "ACTIS/v1" (8 bytes) followed by the 32-byte binary value obtained by hex-decoding the round's envelope_hash field (64 lowercase hex characters):
@@ -212,6 +239,7 @@ Implementations MUST NOT use blame, reputation, risk, or settlement to determine
 - RFC 2119: Key words for use in RFCs
 - RFC 8174: Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words
 - RFC 8785: JSON Canonicalization Scheme (JCS)
+- RFC 8949: Concise Binary Object Representation (CBOR) (tracked v2 encoding path)
 - NIST FIPS 180-4: Secure Hash Standard (SHA-256)
 
 ---
