@@ -396,6 +396,112 @@ function write009(transcript) {
   writeStandardZip("tv-009-noncompliant-incorrect-final-hash.zip", tbytes, checksums);
 }
 
+function write012() {
+  console.log("tv-012: compatible — keys in non-JCS order in raw JSON");
+  // Take the tv-001 base transcript and write it with keys in reverse alphabetical order
+  // Verifier must recompute hashes via JCS regardless of key order in the file
+  const intentId = INTENT_ID;
+  const createdAtMs = CREATED_AT_MS;
+  const rounds = buildSignedRounds(intentId, createdAtMs);
+  const transcript = {
+    transcript_version: "actis-transcript/1.0",
+    transcript_id: "transcript-" + sha256hex(`${intentId}:${createdAtMs}`),
+    intent_id: intentId,
+    intent_type: "weather.data",
+    created_at_ms: createdAtMs,
+    policy_hash: sha256hex("policy-test-001"),
+    strategy_hash: sha256hex("strategy-test-001"),
+    identity_snapshot_hash: sha256hex("identity-test-001"),
+    rounds,
+  };
+  transcript.final_hash = computeFinalHash(transcript);
+
+  // Serialize with keys in reverse order (non-JCS) to test that verifier canonicalizes
+  function reverseKeys(obj) {
+    if (Array.isArray(obj)) return obj.map(reverseKeys);
+    if (obj && typeof obj === "object") {
+      return Object.fromEntries(
+        Object.keys(obj).sort().reverse().map(k => [k, reverseKeys(obj[k])])
+      );
+    }
+    return obj;
+  }
+  const scrambled = reverseKeys(transcript);
+  const tbytes = Buffer.from(JSON.stringify(scrambled, null, 2), "utf8");
+  const checksums = buildChecksums(MANIFEST_BYTES, tbytes);
+  writeStandardZip("tv-012-compatible-noncanonical-key-order.zip", tbytes, checksums);
+}
+
+function write013() {
+  console.log("tv-013: compatible — extra whitespace in raw JSON");
+  const intentId = INTENT_ID;
+  const createdAtMs = CREATED_AT_MS;
+  const rounds = buildSignedRounds(intentId, createdAtMs);
+  const transcript = {
+    transcript_version: "actis-transcript/1.0",
+    transcript_id: "transcript-" + sha256hex(`${intentId}:${createdAtMs}`),
+    intent_id: intentId,
+    intent_type: "weather.data",
+    created_at_ms: createdAtMs,
+    policy_hash: sha256hex("policy-test-001"),
+    strategy_hash: sha256hex("strategy-test-001"),
+    identity_snapshot_hash: sha256hex("identity-test-001"),
+    rounds,
+  };
+  transcript.final_hash = computeFinalHash(transcript);
+  // Serialize with lots of extra whitespace
+  const tbytes = Buffer.from(JSON.stringify(transcript, null, 8), "utf8");
+  const checksums = buildChecksums(MANIFEST_BYTES, tbytes);
+  writeStandardZip("tv-013-compatible-extra-whitespace.zip", tbytes, checksums);
+}
+
+function write014() {
+  console.log("tv-014: compatible — pretty-printed with CRLF line endings");
+  const intentId = INTENT_ID;
+  const createdAtMs = CREATED_AT_MS;
+  const rounds = buildSignedRounds(intentId, createdAtMs);
+  const transcript = {
+    transcript_version: "actis-transcript/1.0",
+    transcript_id: "transcript-" + sha256hex(`${intentId}:${createdAtMs}`),
+    intent_id: intentId,
+    intent_type: "weather.data",
+    created_at_ms: createdAtMs,
+    policy_hash: sha256hex("policy-test-001"),
+    strategy_hash: sha256hex("strategy-test-001"),
+    identity_snapshot_hash: sha256hex("identity-test-001"),
+    rounds,
+  };
+  transcript.final_hash = computeFinalHash(transcript);
+  // Serialize with CRLF line endings
+  const json = JSON.stringify(transcript, null, 2).replace(/\n/g, "\r\n");
+  const tbytes = Buffer.from(json, "utf8");
+  const checksums = buildChecksums(MANIFEST_BYTES, tbytes);
+  writeStandardZip("tv-014-compatible-crlf-line-endings.zip", tbytes, checksums);
+}
+
+function write015() {
+  console.log("tv-015: compatible — compact JSON (no whitespace)");
+  const intentId = INTENT_ID;
+  const createdAtMs = CREATED_AT_MS;
+  const rounds = buildSignedRounds(intentId, createdAtMs);
+  const transcript = {
+    transcript_version: "actis-transcript/1.0",
+    transcript_id: "transcript-" + sha256hex(`${intentId}:${createdAtMs}`),
+    intent_id: intentId,
+    intent_type: "weather.data",
+    created_at_ms: createdAtMs,
+    policy_hash: sha256hex("policy-test-001"),
+    strategy_hash: sha256hex("strategy-test-001"),
+    identity_snapshot_hash: sha256hex("identity-test-001"),
+    rounds,
+  };
+  transcript.final_hash = computeFinalHash(transcript);
+  // Serialize with no whitespace at all
+  const tbytes = Buffer.from(JSON.stringify(transcript), "utf8");
+  const checksums = buildChecksums(MANIFEST_BYTES, tbytes);
+  writeStandardZip("tv-015-compatible-compact-json.zip", tbytes, checksums);
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -412,6 +518,10 @@ write006(base);
 write007();
 write008(base);
 write009(base);
+write012();
+write013();
+write014();
+write015();
 
 console.log("\ntv-010 and tv-011: skipped (ZIP-structure vectors).");
 console.log("Done. Run conformance harness to verify.");
