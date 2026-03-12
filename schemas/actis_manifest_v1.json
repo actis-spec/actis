@@ -27,6 +27,20 @@
       "description": "Relative paths that are not required for ACTIS pass/fail. Same path format rules as core_files.",
       "items": { "type": "string", "minLength": 1 },
       "default": []
+    },
+    "external_anchors": {
+      "type": "array",
+      "description": "Optional transparency log commitments for this bundle. Reserved for future use. MUST NOT affect actis_status in v1.0.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "log":                   { "type": "string" },
+          "entry_id":              { "type": "string" },
+          "committed_at":          { "type": "string" },
+          "inclusion_proof_path":  { "type": "string" }
+        }
+      },
+      "default": []
     }
   }
 }

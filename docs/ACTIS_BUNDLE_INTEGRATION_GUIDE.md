@@ -111,11 +111,11 @@ ACTIS v1.0 uses the transcript format identified by **`actis-transcript/1.0`**.
 Round 0 (the INTENT round) has no previous round. Its `previous_round_hash` is computed as:
 
 ```
-intent_id_bytes = UTF-8 encode of intent_id (raw string as in JSON; no trimming, no Unicode normalization)
-previous_round_hash = SHA-256(intent_id_bytes)  // 64 lowercase hex
+genesis_input = UTF-8 encode of (intent_id + ":" + decimal(created_at_ms))
+previous_round_hash = SHA-256(genesis_input)  // 64 lowercase hex
 ```
 
-Implementations MUST treat leading/trailing whitespace in `intent_id` as significant and MUST NOT apply Unicode normalization. See ACTIS_COMPATIBILITY.md §3.7.1.
+Implementations MUST treat leading/trailing whitespace in `intent_id` as significant and MUST NOT apply Unicode normalization. The decimal representation of `created_at_ms` uses no leading zeros and no JSON wrapping. See ACTIS_COMPATIBILITY.md §3.1.
 
 **Example:**
 
@@ -139,7 +139,8 @@ import bs58 from "bs58";
 // Generate a keypair (or load from your agent's identity store)
 const keypair = nacl.sign.keyPair();
 
-// The data to sign is the envelope_hash as 64 lowercase hex characters, UTF-8 encoded (no 0x prefix). See ACTIS_COMPATIBILITY.md §2 (Envelope Hash Construction) and §4 (Signature Verification).
+// The signing message is 40 bytes: utf8("ACTIS/v1") (8 bytes) || hex_decode(envelope_hash) (32 bytes).
+// Do NOT sign the UTF-8 envelope_hash string. See ACTIS_COMPATIBILITY.md §2.3 and §4.
 const envelopeHash = "144090ff43d039c1ea7cae50824a1bc1376ca97f7fc326dfa8021315af47e077";
 const message = new TextEncoder().encode(envelopeHash);
 
@@ -228,7 +229,7 @@ writeFileSync("checksums.sha256", lines);
         "scheme": "ed25519"
       },
       "timestamp_ms": 1709500000000,
-      "previous_round_hash": "SHA256('intent-noble-weather-20260303-001')",
+      "previous_round_hash": "SHA256('intent-noble-weather-20260303-001:' + decimal(created_at_ms))",
       "agent_id": "buyer",
       "public_key_b58": "21wxunPRWgrzXqK48yeE1aEZtfpFU2AwY8odDiGgBT4J",
       "content_summary": {
@@ -347,7 +348,7 @@ curl -X POST https://verifier.example/v1/verify \
 
 **Cause:** The signature was created using a different scheme (e.g., secp256k1, RSA) but `scheme` is set to `"ed25519"`, or the signature was created over different data than `envelope_hash`.
 
-**Fix:** ACTIS v1.0 supports **Ed25519 only**. The signature MUST be an Ed25519 detached signature over the `envelope_hash` string encoded as UTF-8 bytes. Verify that `signer_public_key_b58` matches the key that created the signature.
+**Fix:** ACTIS v1.0 supports **Ed25519 only**. The signature MUST be an Ed25519 detached signature over the 40-byte message: `utf8("ACTIS/v1") || hex_decode(envelope_hash)`. Do NOT sign the UTF-8 hex string directly. Verify that `signer_public_key_b58` matches the key that created the signature.
 
 ---
 
@@ -355,8 +356,8 @@ curl -X POST https://verifier.example/v1/verify \
 
 - [ ] Generate an Ed25519 keypair for your agent
 - [ ] Create a transcript with `transcript_version: "actis-transcript/1.0"`
-- [ ] Compute round-0 `previous_round_hash` as `SHA-256(intent_id)`
-- [ ] Sign each round's `envelope_hash` with Ed25519
+- [ ] Compute round-0 `previous_round_hash` as SHA-256(utf8(intent_id + ":" + decimal(created_at_ms)))
+- [ ] Sign each round with Ed25519 over the 40-byte message: utf8("ACTIS/v1") || hex_decode(envelope_hash)
 - [ ] Compute each round's `round_hash` (canonical JSON, sorted keys, excluding `round_hash`)
 - [ ] Set each subsequent round's `previous_round_hash` to the prior round's `round_hash`
 - [ ] Compute `final_hash` (canonical JSON of entire transcript, excluding `final_hash`)
@@ -372,6 +373,61 @@ curl -X POST https://verifier.example/v1/verify \
 - Produce real transaction transcripts (e.g. successful procurement, policy-driven rejection, terminal failure) with the structure above.
 - Anonymize sensitive data while preserving hash chain and signature validity.
 - Run the ACTIS conformance harness to validate your verifier. The harness exists in the ACTIS repository at `actis/test-vectors/run_conformance.sh`. If you are reading a vendored copy of ACTIS, ensure you have included the `actis/test-vectors/` directory (including `expected_results.json` and the `generated/` zip files). If you do not have the harness, you can still validate by running your verifier on each of tv-001..tv-008 and comparing the JSON output to the expected values in `expected_results.json`.
+
+---
+
+## 10. Transparency Log Anchoring (Informative)
+
+ACTIS bundles are self-evidencing and offline-verifiable by design. A bundle
+that passes ACTIS verification is cryptographically intact without any external
+dependency. Transparency log anchoring is an optional layer that can be added
+on top of ACTIS verification to provide additional guarantees.
+
+### 10.1 Why anchor?
+
+Anchoring a bundle's `final_hash` to an append-only transparency log provides:
+
+- **Timestamping** — Proof that a bundle existed at or before a given time,
+  independent of the bundle producer.
+- **Public tamper resistance** — Any attempt to retroactively alter a committed
+  bundle hash is detectable by any log observer.
+- **Equivocation detection** — A log that enforces unique `transcript_id`
+  commitments can detect whether two different bundles have been produced for
+  the same transaction. See ACTIS_STANDARD_v1.md §7.2 for the equivocation
+  threat model.
+
+### 10.2 How to anchor
+
+ACTIS does not mandate any specific transparency log. Producers MAY anchor
+bundles by committing the `final_hash` (and optionally the `transcript_id`) to
+any append-only log that provides inclusion proofs. Examples include:
+
+- RFC 6962 / RFC 9162 Certificate Transparency logs
+- Rekor (Sigstore)
+- Any organizational or consortium append-only ledger
+
+The anchor commitment and inclusion proof SHOULD be stored as optional files
+in the bundle (e.g. `optional/tlog_inclusion_proof.json`) and listed in
+`optional_files` in the manifest. They MUST NOT be listed in `core_files` and
+MUST NOT affect `actis_status`.
+
+### 10.3 The external_anchors manifest field
+
+The manifest schema reserves the `external_anchors` field for future use.
+When present, it is an array of objects describing transparency log commitments
+for this bundle. This field is optional and carries no normative weight in
+ACTIS v1.0; verifiers MUST ignore it for the purposes of determining
+`actis_status`.
+```json
+"external_anchors": [
+  {
+    "log": "rekor.sigstore.dev",
+    "entry_id": "<log entry UUID or hash>",
+    "committed_at": "<ISO 8601 timestamp>",
+    "inclusion_proof_path": "optional/tlog_inclusion_proof.json"
+  }
+]
+```
 
 ---
 
