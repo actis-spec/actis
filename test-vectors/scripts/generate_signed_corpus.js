@@ -396,6 +396,101 @@ function write009(transcript) {
   writeStandardZip("tv-009-noncompliant-incorrect-final-hash.zip", tbytes, checksums);
 }
 
+// ---------------------------------------------------------------------------
+// tv-016: lifted round — valid round injected into wrong chain position
+// Round 2 (ACCEPT, signed by buyer) is placed at position 0, breaking genesis linkage.
+// Signatures are structurally valid Ed25519 but chain linkage fails.
+// ---------------------------------------------------------------------------
+function write016(transcript) {
+  console.log("tv-016: noncompliant-lifted-round-wrong-position");
+  const t = JSON.parse(JSON.stringify(transcript));
+
+  // Take the original round 2 (ACCEPT) and place it at position 0.
+  // Its previous_round_hash refers to round 1's hash, not the genesis hash,
+  // so the chain cannot link from the correct genesis value.
+  const liftedRound = JSON.parse(JSON.stringify(t.rounds[2]));
+  liftedRound.round_number = 0;
+  // Leave liftedRound.previous_round_hash as-is (it points to round 1's hash,
+  // not the genesis computed from intent_id + created_at_ms).
+  // Do NOT recompute round_hash so the signature still covers the original envelope.
+
+  const tamperedTranscript = {
+    ...omitKeys(t, ["rounds", "final_hash"]),
+    rounds: [liftedRound],
+  };
+  tamperedTranscript.final_hash = computeFinalHash(tamperedTranscript);
+
+  const tbytes = Buffer.from(serializeTranscript(tamperedTranscript), "utf8");
+  const checksums = buildChecksums(MANIFEST_BYTES, tbytes);
+  writeStandardZip("tv-016-noncompliant-lifted-round-wrong-position.zip", tbytes, checksums);
+}
+
+// ---------------------------------------------------------------------------
+// tv-017: cross-transcript round lift — round from a different transcript
+// injected into the base transcript. The foreign round's previous_round_hash
+// comes from a different genesis (different intent_id), so chain linkage fails.
+// ---------------------------------------------------------------------------
+function write017() {
+  console.log("tv-017: noncompliant-cross-transcript-round-lift");
+
+  // Build a second transcript with a different intent_id
+  const foreignIntentId = "intent-foreign-999";
+  const foreignCreatedAtMs = 2000000000000;
+  const foreignRounds = buildSignedRounds(foreignIntentId, foreignCreatedAtMs);
+
+  // Take round 0 from the foreign transcript and inject it into the base transcript.
+  const foreignRound = JSON.parse(JSON.stringify(foreignRounds[0]));
+
+  const baseIntentId = INTENT_ID;
+  const baseCreatedAtMs = CREATED_AT_MS;
+  const baseTranscriptId = "transcript-" + sha256hex(baseIntentId + ":" + baseCreatedAtMs + ":corpus-v1");
+
+  // The foreign round's previous_round_hash = genesis of foreign transcript,
+  // not genesis of base transcript. Chain linkage will fail.
+  const tamperedTranscript = {
+    transcript_version: "actis-transcript/1.0",
+    transcript_id: baseTranscriptId,
+    intent_id: baseIntentId,
+    intent_type: "weather.data",
+    created_at_ms: baseCreatedAtMs,
+    policy_hash: "Policy satisfied",
+    strategy_hash: "Verified strategy adherence",
+    identity_snapshot_hash: "f4edf4b37099e97dd380c24c37496de32c341406c2901bd830d2e35386ca1c37",
+    rounds: [foreignRound],
+  };
+  tamperedTranscript.final_hash = computeFinalHash(tamperedTranscript);
+
+  const tbytes = Buffer.from(serializeTranscript(tamperedTranscript), "utf8");
+  const checksums = buildChecksums(MANIFEST_BYTES, tbytes);
+  writeStandardZip("tv-017-noncompliant-cross-transcript-round-lift.zip", tbytes, checksums);
+}
+
+// ---------------------------------------------------------------------------
+// tv-018: truncated transcript — middle round silently removed
+// Rounds 0 and 2 remain; round 1 (ASK) is dropped. Round 2's
+// previous_round_hash still points to round 1's hash (now absent),
+// so chain linkage from round 0 → round 2 is broken.
+// ---------------------------------------------------------------------------
+function write018(transcript) {
+  console.log("tv-018: noncompliant-truncated-middle-round");
+  const t = JSON.parse(JSON.stringify(transcript));
+
+  // Drop round 1, keep rounds 0 and 2 exactly as-is (including their hashes and sigs).
+  // Round 2's previous_round_hash = round 1's round_hash, which no longer exists
+  // in the chain, so linkage from round 0 to round 2 breaks.
+  const truncatedRounds = [t.rounds[0], t.rounds[2]];
+
+  const tamperedTranscript = {
+    ...omitKeys(t, ["rounds", "final_hash"]),
+    rounds: truncatedRounds,
+  };
+  tamperedTranscript.final_hash = computeFinalHash(tamperedTranscript);
+
+  const tbytes = Buffer.from(serializeTranscript(tamperedTranscript), "utf8");
+  const checksums = buildChecksums(MANIFEST_BYTES, tbytes);
+  writeStandardZip("tv-018-noncompliant-truncated-middle-round.zip", tbytes, checksums);
+}
+
 function write012() {
   console.log("tv-012: compatible — keys in non-JCS order in raw JSON");
   // Take the tv-001 base transcript and write it with keys in reverse alphabetical order
@@ -518,10 +613,13 @@ write006(base);
 write007();
 write008(base);
 write009(base);
+write016(base);
+write017();
+write018(base);
 write012();
 write013();
 write014();
 write015();
 
-console.log("\ntv-010 and tv-011: skipped (ZIP-structure vectors).");
+console.log("\ntv-010 and tv-011: skipped (ZIP-structure vectors).\ntv-012–tv-018 complete.");
 console.log("Done. Run conformance harness to verify.");
