@@ -123,6 +123,48 @@ transcript_for_hash = transcript with "final_hash" and "model_context" removed
 final_hash = to_lower_hex( SHA-256( utf8( canonical_json( transcript_for_hash ) ) ) )
 ```
 
+### 3.5 Hash Chain Framing (Informative)
+
+A common attack against hash-chain protocols is framing ambiguity: if a chain
+is constructed by raw concatenation of variable-length fields, then
+`hash("ab" + "c")` equals `hash("a" + "bc")`, allowing an attacker to produce
+two different logical inputs that yield the same hash.
+
+ACTIS v1.0 is not vulnerable to this attack. The round_hash and final_hash are
+computed over the RFC 8785 canonical JSON serialization of a structured object,
+not over raw field concatenation. RFC 8785 produces an unambiguous, length-delimited
+encoding for every field. Two distinct JSON objects with different field values
+or structure cannot produce the same canonical serialization, and therefore cannot
+produce the same hash.
+
+Implementations MUST use an RFC 8785-compliant canonicalizer. The use of raw
+string concatenation or non-canonical serialization in place of JCS is a
+conformance defect and voids the framing ambiguity protection.
+
+### 3.6 Replay Determinism (Normative)
+
+Replay MUST be deterministic. Two conformant verifiers presented with the same
+bundle MUST produce identical `hash_chain_ok` and `replay_ok` results.
+
+The following are forbidden sources of nondeterminism in replay:
+
+- **Timestamps and wall-clock time** — Verifiers MUST NOT read the system clock
+  during replay. All timestamps used in hash computation MUST come from the
+  transcript fields.
+- **Random number generation** — Verifiers MUST NOT use RNG during replay.
+- **Locale and collation** — Verifiers MUST NOT apply locale-specific string
+  ordering or comparison during canonicalization. RFC 8785 key ordering is
+  lexicographic by Unicode code point, not locale-dependent.
+- **Floating-point serialization** — Verifiers MUST NOT use platform-specific
+  float-to-string conversion. RFC 8785 defines deterministic number encoding;
+  implementations MUST follow it.
+- **Unicode normalization** — Verifiers MUST NOT apply NFC, NFD, NFKC, or NFKD
+  normalization to string values during canonicalization. Strings MUST be
+  interpreted exactly as encoded in the JSON document.
+
+Any input that affects replay outcome MUST be recorded in the transcript itself.
+External state that is not recorded in the transcript MUST NOT affect replay.
+
 ---
 
 ## 4. Signature Verification
@@ -152,13 +194,14 @@ Verification MUST derive **actis_status** from the following (and only the follo
 1. **Schema/layout:** Transcript conforms to schema; required fields present; bundle layout valid; manifest core files present and unique; no duplicate core path entries; no symlinks or path traversal for core paths.
 2. **Hash chain:** All round hashes and previous_round_hash linkage valid; final_hash (if present) matches recomputation.
 3. **Checksums:** All core files listed in manifest match checksums (if checksum file present).
-4. **Signatures:** All rounds have valid Ed25519 signatures over the round’s envelope_hash.
+4. **Evidence refs:** All artifacts referenced in evidence_refs arrays are present in the bundle (see §8).
+5. **Signatures:** All rounds have valid Ed25519 signatures over the 40-byte domain-separated message (see §4).
 
-**ACTIS_COMPATIBLE:** All of (1)–(4) pass.
+**ACTIS_COMPATIBLE:** All of (1)–(5) pass.
 
-**ACTIS_PARTIAL:** (1), (2), and (3) pass; one or more signatures missing or invalid. No other failure.
+**ACTIS_PARTIAL:** (1)–(4) pass; one or more signatures missing or invalid. No other failure.
 
-**ACTIS_NONCOMPLIANT:** Any of (1)–(3) fail, or any failure other than signature-only.
+**ACTIS_NONCOMPLIANT:** Any of (1)–(4) fail, or any failure other than signature-only.
 
 Implementations MUST NOT use blame, reputation, risk, or settlement to determine actis_status. Only the checks above are normative.
 
@@ -169,3 +212,37 @@ Implementations MUST NOT use blame, reputation, risk, or settlement to determine
 - RFC 2119: Key words for use in RFCs
 - RFC 8174: Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words
 - RFC 8785: JSON Canonicalization Scheme (JCS)
+- NIST FIPS 180-4: Secure Hash Standard (SHA-256)
+
+---
+
+## 8. Evidence Omission Enforcement (Normative)
+
+If a transcript round or failure_event contains an `evidence_refs` array, all
+referenced artifacts MUST be present in the bundle for the bundle to be
+considered complete.
+
+Verifiers MUST check that every entry in every `evidence_refs` array resolves
+to an artifact present in the bundle. If any referenced artifact is absent,
+verification MUST fail with `actis_status: ACTIS_NONCOMPLIANT`.
+
+This rule closes the evidence omission attack: an attacker cannot exclude
+unfavorable evidence from a bundle while keeping the remaining structure intact.
+A bundle that is missing referenced evidence is not a complete ACTIS bundle and
+MUST NOT receive `ACTIS_COMPATIBLE` or `ACTIS_PARTIAL` status.
+
+**Verification order (normative):**
+
+Implementations MUST check bundle integrity in the following order and MUST
+fail fast at the first failure:
+
+1. Manifest present and valid (core_files listed, no path traversal, no duplicates)
+2. All core files present and checksums match
+3. Transcript schema valid
+4. Hash chain valid (round hashes, chain linkage, final_hash)
+5. Evidence refs complete (all evidence_refs resolve to bundle artifacts)
+6. Signatures valid (Ed25519 over 40-byte domain-separated message)
+
+Reporting `actis_status` MUST reflect the earliest failure in this order.
+`ACTIS_PARTIAL` is reserved for signature-only failures (step 6 only).
+Any failure at steps 1–5 MUST yield `ACTIS_NONCOMPLIANT`.
